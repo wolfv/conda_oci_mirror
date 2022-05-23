@@ -302,10 +302,10 @@ class Task:
 
         global package_counter
         with package_counter.get_lock():
-            package_counter += 1
-            if package_counter % 10 == 0:
+            package_counter.value += 1
+            if package_counter.value % 10 == 0:
                 elapsed_min = (time.time() - counter_start) / 60.0
-                print("Average no packages / min: ", package_counter / elapsed_min)
+                print("Average no packages / min: ", package_counter.value / elapsed_min)
 
         # delete the package
         self.file.unlink()
