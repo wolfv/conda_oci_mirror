@@ -231,7 +231,7 @@ def get_existing_packages(oci, channel, subdir, package):
     return set(f"{package}-{tag}.tar.bz2" for tag in tags)
 
 
-package_counter = Value('i', 0)
+package_counter = mp.Value('i', 0)
 counter_start = time.time()
 
 
