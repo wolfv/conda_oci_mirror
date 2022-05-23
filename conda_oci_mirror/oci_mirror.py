@@ -371,11 +371,11 @@ def mirror(
                     )
 
     if not dry_run:
-        # for task in tasks:
-        #     start = time.time()
-        #     task.run()
-        #     end = time.time()
-        #     elapsed = end - start
+        for task in tasks:
+            # start = time.time()
+            task.run()
+            # end = time.time()
+            # elapsed = end - start
 
         #     # This should at least take 20 seconds
         #     # Otherwise we sleep a bit
@@ -384,8 +384,8 @@ def mirror(
         #         time.sleep(3 - elapsed)
 
         # This was going too fast
-        with mp.Pool(processes=4) as pool:
-            pool.map(run_task, tasks)
+        # with mp.Pool(processes=4) as pool:
+        #     pool.map(run_task, tasks)
 
 
 if __name__ == "__main__":
