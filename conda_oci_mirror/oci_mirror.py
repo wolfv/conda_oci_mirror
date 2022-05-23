@@ -164,7 +164,6 @@ def get_github_packages(location, user_or_org, filter_function=None):
     user_or_org, username_or_orgname = user_or_org.split(":")
     gh_session.auth = get_github_auth(username_or_orgname)
 
-    print("Auth: ", gh_session.auth)
     # api_url = f'https://api.github.com/orgs/{org}/packages'
     headers = {"accept": "application/vnd.github.v3+json"}
     if user_or_org == "user":
@@ -232,6 +231,10 @@ def get_existing_packages(oci, channel, subdir, package):
     return set(f"{package}-{tag}.tar.bz2" for tag in tags)
 
 
+package_counter = Value('i', 0)
+counter_start = time.time()
+
+
 class Task:
     def __init__(
         self, oci, channel, subdir, package, package_info, cache_dir, remote_loc
@@ -287,7 +290,6 @@ class Task:
         if not self.file or not self.file.exists():
             self.file = self.download_file()
 
-        print(f"File downloaded: {self.file}")
         if check_checksum(self.file, self.package_info) is False:
             self.file.unlink()
             self.file = None
@@ -298,7 +300,13 @@ class Task:
         except Exception:
             return self.retry()
 
-        print(f"File uploaded to {self.remote_loc}")
+        global package_counter
+        with package_counter.get_lock():
+            package_counter += 1
+            if package_counter % 10 == 0:
+                elapsed_min = (time.time() - counter_start) / 60.0
+                print("Average no packages / min: ", package_counter / elapsed_min)
+
         # delete the package
         self.file.unlink()
 
@@ -319,7 +327,6 @@ def mirror(
     else:
         forbidden_packages = []
 
-    print("Cache dir is: ", cache_dir)
     raw_user_or_org = target_org_or_user.split(":")[1]
     oci = OCI("https://ghcr.io", raw_user_or_org)
 
@@ -351,7 +358,6 @@ def mirror(
                 )
 
                 if key not in existing_packages:
-                    print("Adding task for ", key)
                     tasks.append(
                         Task(
                             oci,
