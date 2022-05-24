@@ -232,7 +232,7 @@ def get_existing_packages(oci, channel, subdir, package):
 
 
 package_counter = mp.Value('i', 0)
-counter_start = time.time()
+counter_start = mp.Value('ts', time.time())
 
 
 class Task:
@@ -300,12 +300,16 @@ class Task:
         except Exception:
             return self.retry()
 
-        global package_counter
-        with package_counter.get_lock():
+        global package_counter, counter_start
+        with package_counter.get_lock() as l1, counter_start.get_lock() as l2:
             package_counter.value += 1
             if package_counter.value % 10 == 0:
-                elapsed_min = (time.time() - counter_start) / 60.0
+                elapsed_min = (time.time() - counter_start.value) / 60.0
                 print("Average no packages / min: ", package_counter.value / elapsed_min)
+
+            if package_counter.value % 50 == 0:
+                package_counter.value = 0
+                counter_start.value = time.time()
 
         # delete the package
         self.file.unlink()
@@ -371,6 +375,9 @@ def mirror(
                     )
 
     if not dry_run:
+        global counter_start
+        with counter_start.get_lock():
+            counter_start.value = time.time()
         num_proc = 4
         # for task in tasks:
         #     # start = time.time()
