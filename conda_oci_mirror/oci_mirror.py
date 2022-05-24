@@ -132,7 +132,7 @@ def upload_conda_package(path_to_archive, host, channel, oci, extra_tags=None):
             j = json.load(fi)
             subdir = j["subdir"]
 
-        print("Pushing: ", f"{host}/{channel}/{subdir}/{name}")
+        print(f"Pushing: {host}/{channel}/{subdir}/{name}:{version_and_build}")
         oras.push(
             f"{host}/{channel}/{subdir}/{name}", version_and_build, layers + metadata
         )
@@ -371,11 +371,12 @@ def mirror(
                     )
 
     if not dry_run:
-        for task in tasks:
-            # start = time.time()
-            task.run()
-            # end = time.time()
-            # elapsed = end - start
+        num_proc = 4
+        # for task in tasks:
+        #     # start = time.time()
+        #     task.run()
+        #     # end = time.time()
+        #     # elapsed = end - start
 
         #     # This should at least take 20 seconds
         #     # Otherwise we sleep a bit
@@ -384,8 +385,8 @@ def mirror(
         #         time.sleep(3 - elapsed)
 
         # This was going too fast
-        # with mp.Pool(processes=4) as pool:
-        #     pool.map(run_task, tasks)
+        with mp.Pool(processes=num_proc) as pool:
+            pool.map(run_task, tasks)
 
 
 if __name__ == "__main__":
