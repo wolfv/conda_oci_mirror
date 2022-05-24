@@ -232,7 +232,7 @@ def get_existing_packages(oci, channel, subdir, package):
 
 
 package_counter = mp.Value('i', 0)
-counter_start = mp.Value('ts', time.time())
+counter_start = mp.Value('d', time.time())
 
 
 class Task:
