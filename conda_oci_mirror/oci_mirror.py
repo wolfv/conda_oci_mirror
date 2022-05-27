@@ -263,23 +263,24 @@ class Task:
         except requests.exceptions.HTTPError as e:
             if e.response.status_code >= 500:
                 # todo check retry-after header
-                return self.retry(timeout=60, target_func=self.download_file)
+                return self.retry(timeout=60, target_func=self.download_file, error="downloading file failed with >=500")
             else:
                 raise e
 
         return fn
 
-    def retry(self, timeout=5, target_func=None):
+    def retry(self, timeout=30, target_func=None, error="unspecified error"):
         if not target_func:
             target_func = self.run
 
         print(f"Retrying in {timeout} seconds")
-        time.sleep(timeout)
         self.retries += 1
-        if self.retries > 3:
-            raise RuntimeError(
-                "Could not retrieve the correct file. Hashes not matching for 3 times"
-            )
+
+        t = timeout + 3 ** self.retries
+        time.sleep(t)
+
+        if self.retries > 5:
+            raise RuntimeError(error)
 
         return target_func()
 
@@ -293,12 +294,12 @@ class Task:
         if check_checksum(self.file, self.package_info) is False:
             self.file.unlink()
             self.file = None
-            return self.retry()
+            return self.retry(error="checksums wrong")
 
         try:
             upload_conda_package(self.file, self.remote_loc, self.channel, self.oci)
         except Exception:
-            return self.retry()
+            return self.retry(error="upload did not work")
 
         global package_counter, counter_start
         with package_counter.get_lock() as l1, counter_start.get_lock() as l2:
