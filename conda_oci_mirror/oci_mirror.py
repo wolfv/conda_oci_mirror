@@ -234,6 +234,7 @@ def get_existing_packages(oci, channel, subdir, package):
 
 package_counter = mp.Value('i', 0)
 counter_start = mp.Value('d', time.time())
+last_upload_time = mp.Value('d', time.time())
 
 
 class Task:
@@ -299,12 +300,21 @@ class Task:
             self.file = None
             return self.retry(error="checksums wrong")
 
+        global package_counter, counter_start, last_upload_time
+
+        with last_upload_time.get_lock():
+            lt = last_upload_time.value
+            tnow = time.time()
+            if tnow - lt < 1:
+                print(f"Rate limit sleep for {(lt + 1) - tnow}")
+                time.sleep((lt + 1) - tnow)
+            last_upload_time.value = tnow
+
         try:
             upload_conda_package(self.file, self.remote_loc, self.channel, self.oci)
         except Exception:
             return self.retry(error="upload did not work")
 
-        global package_counter, counter_start
         with package_counter.get_lock() as l1, counter_start.get_lock() as l2:
             package_counter.value += 1
             if package_counter.value % 10 == 0:
@@ -396,7 +406,8 @@ def mirror(
         #         time.sleep(3 - elapsed)
 
         # This was going too fast
-        with RateLimitedThreadPool(processes=num_proc, rate=30, per=60) as pool:
+        # with RateLimitedThreadPool(processes=num_proc, rate=30, per=60) as pool:
+        with mp.Pool(processes=num_proc) as pool:
             pool.map(run_task, tasks)
 
 
