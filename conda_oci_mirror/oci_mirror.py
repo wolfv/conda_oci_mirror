@@ -274,10 +274,12 @@ class Task:
         if not target_func:
             target_func = self.run
 
-        print(f"Retrying in {timeout} seconds")
         self.retries += 1
 
         t = timeout + 3 ** self.retries
+
+        print(f"Retrying in {t} seconds - error: {error}")
+
         time.sleep(t)
 
         if self.retries > 5:
