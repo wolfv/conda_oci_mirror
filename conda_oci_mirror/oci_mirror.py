@@ -26,6 +26,7 @@ from conda_oci_mirror.layer import Layer
 from conda_oci_mirror.oci import OCI
 from conda_oci_mirror.oras import ORAS
 from conda_oci_mirror.util import get_github_auth, md5sum
+from conda_oci_mirror.rate_limited_pool import RateLimitedThreadPool
 
 
 def compress_folder(source_dir, output_filename):
@@ -269,7 +270,7 @@ class Task:
 
         return fn
 
-    def retry(self, timeout=30, target_func=None, error="unspecified error"):
+    def retry(self, timeout=5, target_func=None, error="unspecified error"):
         if not target_func:
             target_func = self.run
 
@@ -393,7 +394,7 @@ def mirror(
         #         time.sleep(3 - elapsed)
 
         # This was going too fast
-        with mp.Pool(processes=num_proc) as pool:
+        with RateLimitedThreadPool(processes=num_proc, rate=30, per=60) as pool:
             pool.map(run_task, tasks)
 
 
