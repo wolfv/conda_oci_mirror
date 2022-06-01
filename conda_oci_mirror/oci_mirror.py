@@ -271,7 +271,7 @@ class Task:
 
         return fn
 
-    def retry(self, timeout=5, target_func=None, error="unspecified error"):
+    def retry(self, timeout=2, target_func=None, error="unspecified error"):
         if not target_func:
             target_func = self.run
 
@@ -305,9 +305,10 @@ class Task:
         with last_upload_time.get_lock():
             lt = last_upload_time.value
             tnow = time.time()
-            if tnow - lt < 1:
-                print(f"Rate limit sleep for {(lt + 1) - tnow}")
-                time.sleep((lt + 1) - tnow)
+            rt = 2
+            if tnow - lt < rt:
+                print(f"Rate limit sleep for {(lt + rt) - tnow}")
+                time.sleep((lt + rt) - tnow)
             last_upload_time.value = tnow
 
         try:
