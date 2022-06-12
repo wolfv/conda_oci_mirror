@@ -305,7 +305,7 @@ class Task:
         with last_upload_time.get_lock():
             lt = last_upload_time.value
             tnow = time.time()
-            rt = 2
+            rt = 0.5
             if tnow - lt < rt:
                 print(f"Rate limit sleep for {(lt + rt) - tnow}")
                 time.sleep((lt + rt) - tnow)
