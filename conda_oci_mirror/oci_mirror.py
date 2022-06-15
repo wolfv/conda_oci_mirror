@@ -137,7 +137,10 @@ def upload_conda_package(path_to_archive, host, channel, oci, extra_tags=None):
             "r",
         ) as fi:
             j = json.load(fi)
-            subdir = j["subdir"]
+            subdir = j.get("subdir")
+            if not subdir:
+                print("ERROR: info.json doesn't contain subdir!")
+                return
 
         if name.startswith("_"):
             name = f"zzz{name}"
