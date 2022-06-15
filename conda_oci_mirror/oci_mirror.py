@@ -81,11 +81,17 @@ def get_forbidden_packages():
 
 
 def tag_format(tag):
-    return tag.replace("+", "__p__").replace("!", "__e__")
+    return tag\
+        .replace("+", "__p__")\
+        .replace("!", "__e__")\
+        .replace("=", "__eq__")
 
 
 def reverse_tag_format(tag):
-    return tag.replace("__p__", "+").replace("__e__", "!")
+    return tag\
+        .replace("__p__", "+")\
+        .replace("__e__", "!")\
+        .replace("__eq__", "=")
 
 
 def upload_conda_package(path_to_archive, host, channel, oci, extra_tags=None):
@@ -132,6 +138,9 @@ def upload_conda_package(path_to_archive, host, channel, oci, extra_tags=None):
         ) as fi:
             j = json.load(fi)
             subdir = j["subdir"]
+
+        if name.startswith("_"):
+            name = f"zzz{name}"
 
         print(f"Pushing: {host}/{channel}/{subdir}/{name}:{version_and_build}")
         oras.push(
@@ -213,6 +222,9 @@ existing_tags_cache = {}
 
 def get_existing_tags(oci, channel, subdir, package):
     global existing_tags_cache
+
+    if package.startswith('_'):
+        package = f"zzz{package}"
 
     if package in existing_tags_cache:
         return existing_tags_cache[package]
