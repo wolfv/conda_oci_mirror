@@ -1,6 +1,7 @@
 import fnmatch
 import hashlib
 import json
+import datetime
 
 import multiprocessing as mp
 import os
@@ -21,6 +22,7 @@ from conda_oci_mirror.constants import (
     info_index_media_type,
     package_conda_media_type,
     package_tarbz2_media_type,
+    repodata_v1
 )
 from conda_oci_mirror.layer import Layer
 from conda_oci_mirror.oci import OCI
@@ -362,7 +364,7 @@ def mirror(
         forbidden_packages = []
 
     raw_user_or_org = target_org_or_user.split(":")[1]
-    oci = OCI("https://ghcr.io", raw_user_or_org)
+    oci = OCI(host, raw_user_or_org)
 
     remote_loc = f"{host}/{raw_user_or_org}"
 
@@ -372,6 +374,7 @@ def mirror(
 
             full_cache_dir = cache_dir / channel / subdir
 
+            repodata_timestamp = datetime.datetime.now()
             repodata_fn = get_repodata(channel, subdir, cache_dir)
 
             with open(repodata_fn) as fi:
@@ -403,6 +406,15 @@ def mirror(
                             remote_loc,
                         )
                     )
+            repodata_layers = [Layer(repodata_fn.name, repodata_v1)]
+            repodata_date_tag = repodata_timestamp.strftime("%Y.%m.%d.%H.%M")
+
+            oras = ORAS(base_dir=full_cache_dir)
+            print(f"Pushing repodata.json for {host}/{raw_user_or_org}/{channel}/{subdir}: {repodata_date_tag}")
+
+            oras.push(f"{host}/{raw_user_or_org}/{channel}/{subdir}/repodata.json", repodata_date_tag, repodata_layers)
+            print("Pushing latest tag.")
+            oras.push(f"{host}/{raw_user_or_org}/{channel}/{subdir}/repodata.json", "latest", repodata_layers)
 
     if not dry_run:
         global counter_start
