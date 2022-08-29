@@ -14,6 +14,8 @@ from conda_oci_mirror.util import get_github_auth
 class OCI:
     def __init__(self, location, user_or_org):
         self.location = location
+        if not self.location.startswith("http"):
+            self.location = "https://" + self.location
         self.user_or_org = user_or_org
         self.session_map = {}
 
