@@ -96,7 +96,7 @@ def reverse_tag_format(tag):
         .replace("__eq__", "=")
 
 
-def upload_conda_package(path_to_archive, host, channel, extra_tags=None):
+def upload_conda_package(path_to_archive, host, channel, oci, extra_tags=None):
     path_to_archive = pathlib.Path(path_to_archive)
     package_name = get_package_name(path_to_archive)
 
@@ -504,3 +504,4 @@ if __name__ == "__main__":
     # with subdir.get_info('xtensor-0.21.10-h260d524_0') as fi:
     #     paths = json.load(fi.extractfile('paths.json'))
     #     print(paths)
+
