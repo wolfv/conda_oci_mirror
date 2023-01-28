@@ -171,7 +171,7 @@ class Mirror:
                     uri, cache_dir, defaults.repodata_media_type_v1
                 )[0]
                 repodata = util.read_json(index_file)
-                packages = set([p["name"] for _, p in repodata["packages"].items()])
+                packages = set([p["name"] for _, p in (repodata["packages"].items())]) | set([p["name"] for _, p in (repodata["packages.conda"].items())])
                 logger.info(f"Found {len(packages)} packages from {uri}")
 
             except Exception as e:
@@ -193,6 +193,7 @@ class Mirror:
 
                 # Not every package is guaranteed to exist
                 try:
+                    # TODO this should also work for conda packages
                     new_pull = oras.pull_by_media_type(
                         uri, cache_dir, defaults.package_tarbz2_media_type
                     )
@@ -230,8 +231,8 @@ class Mirror:
                 repodata = util.read_json(backup_repodata)
             else:
                 repodata = {"packages": []}
-            files = list(pathlib.Path(cache_dir).rglob("*.tar.bz2"))
-            new_packages = [f for f in files if f.name not in repodata["packages"]]
+            files = list(pathlib.Path(cache_dir).rglob("*.tar.bz2")) + list(pathlib.Path(cache_dir).rglob("*.conda"))
+            new_packages = [f for f in files if f.name not in (repodata["packages"] + repodata["packages.conda"])]
             logger.info(f"Found {len(new_packages)} new packages")
 
             # Push with an updated timestamp

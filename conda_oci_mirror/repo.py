@@ -102,8 +102,10 @@ class PackageRepo:
         skips = skips or []
         data = self.load_repodata()
 
+        packages = data.get("packages", {})
+        packages.update(data.get("packages.conda", {}))
         # Look through package info
-        for pkg, info in data.get("packages", {}).items():
+        for pkg, info in packages.items():
 
             # Case 1: we are given packages to filter to
             if names:
