@@ -4,7 +4,6 @@ import os
 import sys
 
 import pytest
-from conftest import delete_tags  # noqa
 
 # The setup.cfg doesn't install the main module proper
 here = os.path.dirname(os.path.abspath(__file__))
